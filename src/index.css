@@ -1,0 +1,170 @@
+/* ==========================================================================
+   VexiQuest Global Design System & Variables
+   Retro Arcade × Treasure Hunt Edition
+   Dominant Palette:
+     - Arcade Black: #12191D
+     - Deep Arcade Teal: #1C3435
+     - Cabinet Green: #284B45
+     - Muted Sea Green: #52746A
+   Treasure Map Secondary Accents:
+     - Weathered Parchment: #C5AE80
+     - Aged Paper: #D9CCAA
+     - Warm Ivory: #E8DDBD
+     - Dark Map Ink: #443A2E
+   Accents:
+     - Retro Amber: #B9823E
+     - Amber Bright: #DCA252
+     - Amber Glow: rgba(185, 130, 62, 0.35)
+     - Oxide Red: #984B3D
+     - Oxide Bright: #BA5E4E
+   Typography:
+     - Arcade Logo / Badges: 'Press Start 2P', monospace, cursive
+     - Display / Large Numbers / Counters: 'VT323', monospace
+     - UI / Facts / Monospace Input: 'IBM Plex Mono', monospace
+   ========================================================================== */
+
+:root {
+  /* Primary Arcade Colours (Dominant) */
+  --color-arcade-black: #12191D;
+  --color-arcade-dark: #0A0F12;
+  --color-arcade-teal: #1C3435;
+  --color-cabinet-green: #284B45;
+  --color-muted-sea-green: #52746A;
+  --color-sea-green-bright: #6E9489;
+
+  /* Treasure Map Colours (Secondary/Facts/Information) */
+  --color-weathered-parchment: #C5AE80;
+  --color-aged-paper: #D9CCAA;
+  --color-warm-ivory: #E8DDBD;
+  --color-dark-map-ink: #443A2E;
+  --color-map-ink-muted: #5C4F3F;
+
+  /* Arcade Accent Colours */
+  --color-retro-amber: #B9823E;
+  --color-amber-bright: #DCA252;
+  --color-amber-glow: rgba(185, 130, 62, 0.35);
+  --color-amber-tint: rgba(185, 130, 62, 0.12);
+
+  --color-oxide-red: #984B3D;
+  --color-oxide-bright: #BA5E4E;
+  --color-oxide-glow: rgba(152, 75, 61, 0.4);
+  --color-oxide-tint: rgba(152, 75, 61, 0.15);
+
+  /* Semantic UI Tokens */
+  --color-bg-base: #12191D;
+  --color-bg-panel: #182C2D;
+  --color-bg-panel-inset: #0F1C1D;
+  --color-bg-card: #1C3435;
+  --color-bg-card-hover: #244243;
+  --color-border-dim: #213C38;
+  --color-border-medium: #284B45;
+  --color-border-bright: #52746A;
+
+  --color-text-main: #E8DDBD;
+  --color-text-muted: #8EABA2;
+  --color-text-dim: #52746A;
+  --color-text-amber: #DCA252;
+  --color-text-danger: #BA5E4E;
+
+  /* Typography System */
+  --font-arcade: 'Press Start 2P', monospace, cursive;
+  --font-display: 'VT323', monospace;
+  --font-mono: 'IBM Plex Mono', 'Consolas', monospace;
+  --font-body: 'IBM Plex Mono', 'Consolas', monospace;
+  --font-heading: 'Press Start 2P', monospace, cursive;
+  --font-hud: 'VT323', monospace;
+
+  /* Elevation & CRT Depth Shadows */
+  --shadow-arcade-inset: inset 0 2px 4px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(0, 0, 0, 0.45);
+  --shadow-arcade-bezel: 0 0 0 1px #0A0F12, 0 0 0 2px #284B45, 0 4px 12px rgba(0, 0, 0, 0.7);
+  --shadow-amber-glow: 0 0 8px rgba(185, 130, 62, 0.4), 0 0 16px rgba(185, 130, 62, 0.2);
+  --shadow-screen: 0 0 20px rgba(28, 52, 53, 0.5), inset 0 0 30px rgba(0, 0, 0, 0.5);
+
+  /* Geometry & Pixel Radius */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-pill: 9999px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Enforce zero vertical and horizontal page scrolling across all devices */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  background-color: var(--color-arcade-black);
+  color: var(--color-text-main);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Retro Arcade Matrix + Faint Cartographic Graticule Overlay */
+  background-image:
+    /* CRT Scanline fine texture */
+    linear-gradient(rgba(18, 25, 29, 0) 50%, rgba(0, 0, 0, 0.22) 50%),
+    /* Faint Arcade Matrix Grid */
+    linear-gradient(rgba(40, 75, 69, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(40, 75, 69, 0.12) 1px, transparent 1px),
+    /* Subtle Treasure Map Parchment Coordinates Graticule */
+    linear-gradient(rgba(197, 174, 128, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(197, 174, 128, 0.04) 1px, transparent 1px),
+    /* Deep Arcade Teal Radial Atmospheric Glow */
+    radial-gradient(ellipse at 50% 20%, rgba(28, 52, 53, 0.55) 0%, rgba(18, 25, 29, 0.95) 75%),
+    linear-gradient(180deg, #12191D 0%, #0A0F12 100%);
+  background-size:
+    100% 4px,
+    40px 40px,
+    40px 40px,
+    160px 160px,
+    160px 160px,
+    100% 100%,
+    100% 100%;
+  background-position: center top;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  outline: none;
+  user-select: none;
+}
+
+button:focus-visible, input:focus-visible {
+  outline: 2px solid var(--color-retro-amber);
+  outline-offset: 2px;
+}
+
+input {
+  font-family: inherit;
+  outline: none;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
