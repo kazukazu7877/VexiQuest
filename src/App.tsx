@@ -37,11 +37,31 @@ export function App() {
   const [isNewHighScore, setIsNewHighScore] = useState<boolean>(false);
   const [isNewBestStreak, setIsNewBestStreak] = useState<boolean>(false);
 
-  // Support direct test flag query param (?testFlag=au) for visual QA
+  // Support direct test flag query param (?testFlag=au) or preview state (?preview=gameover | ?preview=reveal) for visual QA
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     const testCode = params.get('testFlag');
+    const preview = params.get('preview');
+
+    if (preview === 'gameover') {
+      setTotalAttempted(12);
+      setTotalCorrect(10);
+      setScore(180);
+      setHighestStreak(7);
+      setIsNewHighScore(true);
+      setIsNewBestStreak(true);
+      setScreen('gameover');
+      return;
+    }
+
+    if (preview === 'reveal') {
+      const targetCountry = countries.find(c => c.code.toLowerCase() === (testCode || 'br').toLowerCase()) || countries[0];
+      setCurrentCountry(targetCountry);
+      setScreen('playing');
+      return;
+    }
+
     if (testCode) {
       const targetCountry = countries.find(c => c.code.toLowerCase() === testCode.toLowerCase());
       if (targetCountry) {
