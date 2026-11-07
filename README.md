@@ -1,118 +1,100 @@
-<div align="center">
+# VexiQuest
 
-<img src="./docs/assets/vexiquest-banner.svg" alt="VexiQuest Hero Banner" width="100%" />
+*195 nations. One curious mind.*
 
-# VEXIQUEST
+[![Live Demo](https://img.shields.io/badge/Live_Demo-vexiquest.vercel.app-f59e0b?style=flat&logo=vercel&logoColor=white)](https://vexiquest.vercel.app)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Vite](https://img.shields.io/badge/Vite-8.x-646CFF?style=flat&logo=vite&logoColor=white)](https://vitejs.dev)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat&logo=react&logoColor=black)](https://react.dev)
+[![Status](https://img.shields.io/badge/Status-Actively_Developing-10B981?style=flat)](#development-status)
 
-> *"195 nations. One curious mind."*
-
-**A retro arcade-inspired flag guessing expedition combining vexillological discovery, vintage treasure-map aesthetics, and endless streak-based gameplay.**
-
-[![Live Game](https://img.shields.io/badge/PLAY_ONLINE-vexiquest.vercel.app-f59e0b?style=for-the-badge&logo=vercel&logoColor=white)](https://vexiquest.vercel.app)
-[![React 19](https://img.shields.io/badge/React-19.3.1-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-7.0.2-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Vite](https://img.shields.io/badge/Vite-8.3.5-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev)
-[![Status](https://img.shields.io/badge/Status-Actively_Developing-10B981?style=for-the-badge)](#development-status)
-
-</div>
+![VexiQuest Homepage Screenshot](./docs/screenshots/homepage.png)
+*VexiQuest voyage hub — 1980s retro arcade interface with real-time interactive 3D orthographic globe, difficulty selection, and persistent personal records.*
 
 ---
 
-## 🗺️ About VexiQuest
+## About VexiQuest
 
-**VexiQuest** is a flag-guessing game built around the study of **vexillology** — the history, symbolism, and usage of flags.
+**VexiQuest** is a retro arcade-inspired flag guessing game built around the study of **vexillology** — the history, symbolism, and design of national flags.
 
-The experience fuses the visual soul of **1980s retro coin-op arcade cabinets** with the romantic mystery of **age-of-discovery cartography**. Complete with an orthographic 3D interactive wireframe globe, CRT scanline atmospheres, procedural 16-bit chiptune soundscapes, and comprehensive cultural trivia for every sovereign nation, VexiQuest transforms geography practice into a high-stakes, addictive gauntlet.
+The project pairs geographical learning with the focused tension of classic coin-op arcade gauntlets. Players explore 195 sovereign nations across tiered difficulties, test their recall against high-resolution vector flags, manage limited voyage lives, build answer streaks, and unlock curated cultural and historical trivia for every country.
 
-Whether you're practicing to distinguish the triband flags of West Africa or memorising micro-states in Oceania, each voyage presents fresh challenges, deep trivia, and persistent personal high-score milestones.
-
----
-
-## 📸 Screenshots & Visual Walkthrough
-
-<div align="center">
-
-### 🏛️ The Voyage Hub (Home & Mode Select)
-*Interactive 3D orthographic globe, difficulty mode selection, and persistent personal bests.*
-<br/>
-<img src="./docs/screenshots/homepage.png" alt="VexiQuest Homepage" width="92%" />
-
-<br/><br/>
-
-### 🕹️ The Flag Gauntlet (Gameplay Interface)
-*High-fidelity vector flags, live streak flames, compass lives, and instant fuzzy-match input.*
-<br/>
-<img src="./docs/screenshots/gameplay.png" alt="VexiQuest Gameplay Screen" width="92%" />
-
-<br/><br/>
-
-### 🧭 Discovery & Cultural Trivia (Fact Reveal)
-*Educational trivia, capital cities, continents, and historical context unlocked with each answer.*
-<br/>
-<img src="./docs/screenshots/country-reveal.png" alt="VexiQuest Country Reveal Screen" width="92%" />
-
-<br/><br/>
-
-### 🏆 Voyage Log & High Scores (Game Over)
-*Post-voyage breakdown with accuracy metrics, streaks, score calculations, and record tracking.*
-<br/>
-<img src="./docs/screenshots/results.png" alt="VexiQuest Game Over Results" width="92%" />
-
-</div>
+Designed with an aesthetic reminiscent of 1980s arcade terminals and vintage navigation instruments, VexiQuest runs entirely in the browser with real-time vector graphics, an orthographic 3D canvas globe, and procedural chiptune soundscapes.
 
 ---
 
-## 🌟 Key Features
+## Features
 
-- **🌍 195 Sovereign Nations:** Complete database covering all 193 UN member states plus Vatican City and Palestine.
-- **⚡ Three Difficulty Modes:** Hand-curated flag pools tailored for beginners (*Easy*), seasoned travellers (*Medium*), and vexillology masters (*Hard*).
-- **🕹️ Endless Arcade Gameplay:** Dynamic randomized card decks with strict repeat prevention so flags don't repeat until the pool is exhausted.
-- **💡 Adaptive Hint System:** Contextual geographical and cultural clues (free in Easy, life-costing risk/reward in Medium, disabled in Hard).
-- **💖 Compass & Pixel Hearts:** Visual life counters with custom animations when taking damage or surviving near misses.
-- **🔥 Consecutive Answer Streaks:** Score multipliers that reward sustained knowledge with streak counters and bonus fanfare.
-- **📖 Rich Country Knowledge:** Every nation features curated historical facts, capital cities, geographic classifications, and common aliases.
-- **🌐 Interactive 3D Canvas Globe:** Custom orthographic projection powered by D3-geo and TopoJSON, rotatable with pointer interaction.
-- **🎵 Procedural 16-Bit Web Audio:** Warm retro chiptune melodies and tactile 80s arcade sound effects synthesised entirely in real time (zero bulky MP3/WAV assets).
-- **💾 Local Storage Persistence:** Automatically tracks your high scores, best streaks, and total voyages across each difficulty tier.
-- **📱 Responsive Layout:** Precision-fitted arcade presentation optimised for desktop, tablets, and mobile screens.
+- **195 Sovereign Nations:** Full flag dataset comprising 193 UN member states plus Vatican City and Palestine.
+- **Three Tiered Difficulties:** Hand-curated country pools tailored for beginners (*Easy*), experienced travellers (*Medium*), and vexillology scholars (*Hard*).
+- **Endless Gameplay:** Randomized country decks with strict repeat prevention so flags do not cycle until the active pool is exhausted.
+- **Contextual Hint System:** Clues based on geography, geography facts, capitals, and landmarks (free in Easy, life-costing in Medium, disabled in Hard).
+- **Lives & Scoring:** Visual life counters with arcade hearts and compasses, dynamic point rewards, and consecutive-answer streak bonuses.
+- **Country Facts & Trivia:** Educational post-answer summaries presenting capitals, continents, aliases, and interesting historical details.
+- **Interactive 3D Globe:** Custom orthographic projection built with D3-geo and TopoJSON that smoothly tracks pointer movement.
+- **Procedural Web Audio Engine:** Nostalgic 16-bit arcade sound effects and chiptune melodies synthesized in real time via the Web Audio API without bulky audio files.
+- **Persistent Personal Bests:** LocalStorage tracking for high scores, best streaks, and total voyages across each difficulty tier.
+- **Responsive Layout:** Clean, viewport-optimized layout that adapts between desktop and mobile browsers.
 
 ---
 
-## 🧭 Difficulty Guide
+## Difficulty Modes
 
-| Difficulty | Nation Pool | Starting Lives | Points / Correct | Hint Rule | Target Audience |
+| Difficulty | Nation Pool | Starting Lives | Points / Correct | Hint Rule | Focus |
 | :--- | :---: | :---: | :---: | :--- | :--- |
-| **🟢 Easy** | 48 Most Recognizable Flags | **3 Lives** | **10 pts** | 1 Free hint per flag | Beginners & Cartographers in training |
-| **🟡 Medium** | 116 Recognizable + Regional Flags | **2 Lives** | **20 pts** | Hint costs **1 Life** | Seasoned world travellers |
-| **🔴 Hard** | All 195 Sovereign Nations | **1 Life** | **30 pts** | **No hints allowed** | Vexillology scholars & arcade purists |
+| **Easy** | 48 Most Recognizable Flags | **3 Lives** | **10 pts** | 1 Free hint per flag | Beginners & casual exploration |
+| **Medium** | 116 Recognizable & Regional Flags | **2 Lives** | **20 pts** | Hint costs **1 Life** | Seasoned world travellers |
+| **Hard** | All 195 Sovereign Nations | **1 Life** | **30 pts** | **No hints allowed** | Vexillology purists |
 
 ---
 
-## 🛠️ Tech Stack
+## Screenshots
 
-VexiQuest is built using modern, lightweight web technologies designed for instant loads and zero lag:
+<div align="center">
 
-- **Core Framework:** [React 19](https://react.dev) (`react` + `react-dom`)
-- **Type Safety:** [TypeScript 7](https://www.typescriptlang.org)
-- **Bundler & Dev Server:** [Vite 8](https://vitejs.dev)
+### The Flag Gauntlet
+![VexiQuest Gameplay Interface](./docs/screenshots/gameplay.png)
+*Active gameplay view featuring high-fidelity vector flags, live streak counter, compass health, and instant fuzzy-match input.*
+
+<br/>
+
+### Country Discovery & Fact Reveal
+![VexiQuest Fact Reveal](./docs/screenshots/country-reveal.png)
+*Cultural trivia, official capital, continent classification, and historical context unlocked after each guess.*
+
+<br/>
+
+### Voyage Log & High Scores
+![VexiQuest Game Over Results](./docs/screenshots/results.png)
+*Post-voyage breakdown with accuracy calculations, streak analysis, score summaries, and record indicators.*
+
+</div>
+
+---
+
+## Technology Stack
+
+Inspected directly from the project dependencies and configuration:
+
+- **Frontend Framework:** [React 19](https://react.dev) (`react`, `react-dom`)
+- **Language:** [TypeScript](https://www.typescriptlang.org)
+- **Bundler & Build Tool:** [Vite 8](https://vitejs.dev)
 - **Linter:** [Oxlint](https://oxc.rs)
-- **Cartography & 3D Globe:** [d3-geo](https://github.com/d3/d3-geo), [topojson-client](https://github.com/topojson/topojson-client), [world-atlas](https://github.com/topojson/world-atlas)
+- **Globe & Projections:** [d3-geo](https://github.com/d3/d3-geo), [topojson-client](https://github.com/topojson/topojson-client), [world-atlas](https://github.com/topojson/world-atlas)
 - **Flag Assets:** [flag-icons](https://github.com/lipis/flag-icons) & [svg-country-flags](https://github.com/stefangabos/world_countries)
-- **Audio Synthesis:** Real-time Web Audio API (`AudioContext`, procedural oscillators, gain envelopes)
-- **Deployment & Hosting:** [Vercel](https://vercel.com) with edge routing
+- **Audio Engine:** Native browser Web Audio API (procedural oscillators and gain envelopes)
+- **Deployment Platform:** [Vercel](https://vercel.com)
 
 ---
 
-## 🚀 Getting Started
-
-Follow these steps to run VexiQuest locally on your machine.
+## Getting Started
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org) (v18.0.0 or higher recommended, tested on Node 20+)
-- `npm` (bundled with Node.js) or `pnpm` / `yarn`
+- [Node.js](https://nodejs.org) (v18 or higher recommended)
+- `npm` (bundled with Node.js)
 
-### Installation
+### Local Setup
 
 1. **Clone the repository:**
    ```bash
@@ -125,13 +107,13 @@ Follow these steps to run VexiQuest locally on your machine.
    npm install
    ```
 
-3. **Start the local development server:**
+3. **Start the development server:**
    ```bash
    npm run dev
    ```
-   Open your browser and navigate to `http://localhost:5173/`.
+   Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-4. **Create a production build:**
+4. **Build for production:**
    ```bash
    npm run build
    ```
@@ -143,81 +125,78 @@ Follow these steps to run VexiQuest locally on your machine.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 VexiQuest/
-├── docs/                      # Documentation assets & genuine game screenshots
-│   ├── assets/                # Hero banner & social preview graphics
-│   └── screenshots/           # Captured gameplay, reveal, and results screens
-├── public/                    # Static public assets
-│   ├── favicon.svg            # Pixel compass favicon
-│   ├── icons.svg              # SVG sprites
-│   └── flags/                 # Vector SVG country flags (195 nations)
+├── docs/                      # Genuine game captures and repository assets
+│   ├── assets/                # Social preview screenshot
+│   └── screenshots/           # Real in-game screenshots
+├── public/                    # Static assets (favicons, SVG icons, country flags)
+│   └── flags/                 # 195 vector country flag SVGs
 ├── src/
-│   ├── assets/                # App icons & branding illustrations
+│   ├── assets/                # Branding icons
 │   ├── components/            # React UI components
-│   │   ├── AudioControls.tsx       # Music & SFX toggle sliders
-│   │   ├── CompassLives.tsx        # Compass & pixel heart health meters
-│   │   ├── FlagCard.tsx            # Flag presentation & aspect ratio card
-│   │   ├── GameOverScreen.tsx      # Results breakdown & high scores
-│   │   ├── GameScreen.tsx          # Active guessing gauntlet
-│   │   ├── HomeScreen.tsx          # Main voyage terminal & difficulty select
-│   │   ├── Icons.tsx               # Pixel & retro arcade vector icons
-│   │   ├── InfoCard.tsx            # Country facts & trivia reveal
+│   │   ├── AudioControls.tsx       # Music and sound effects toggles
+│   │   ├── CompassLives.tsx        # Compass and pixel life meters
+│   │   ├── FlagCard.tsx            # Flag presentation card with accurate aspect ratios
+│   │   ├── GameOverScreen.tsx      # Results breakdown, accuracy and high score log
+│   │   ├── GameScreen.tsx          # Active guessing gauntlet interface
+│   │   ├── HomeScreen.tsx          # Voyage hub and mode selection
+│   │   ├── Icons.tsx               # Vector retro arcade iconography
+│   │   ├── InfoCard.tsx            # Country facts, capital, and trivia modal
 │   │   ├── InteractiveGlobe.tsx    # D3-geo orthographic 3D canvas globe
-│   │   ├── PixelHearts.tsx         # Heart damage indicators
-│   │   └── VintageDecorations.tsx  # CRT border flourishes & parchment borders
+│   │   ├── PixelHearts.tsx         # Arcade heart health indicators
+│   │   └── VintageDecorations.tsx  # CRT scanlines and border flourishes
 │   ├── data/
-│   │   ├── countries.ts            # Complete 195-country dataset (hints, trivia, capitals)
-│   │   ├── difficultyPools.ts      # Tiered difficulty country partitions
-│   │   └── flagRatios.json         # Accurate aspect ratio mappings for all flags
+│   │   ├── countries.ts            # 195-country database (hints, capitals, facts)
+│   │   ├── difficultyPools.ts      # Easy, Medium, and Hard flag groupings
+│   │   └── flagRatios.json         # Aspect ratio mapping for all flags
 │   ├── types/
-│   │   └── game.ts                 # Core TypeScript interfaces & configurations
+│   │   └── game.ts                 # TypeScript interfaces and difficulty configs
 │   ├── utils/
-│   │   ├── answerChecker.ts        # Fuzzy matching, diacritics & alias handling
-│   │   ├── gamePool.ts             # Deck shuffle & repeat prevention logic
-│   │   ├── soundEngine.ts          # Procedural Web Audio chiptune & arcade synth
-│   │   └── storage.ts              # LocalStorage persistent personal bests
-│   ├── App.css                # Retro arcade styling, CRT filters & animations
-│   ├── App.tsx                # Master state controller & screen router
-│   ├── index.css              # Global typography & CSS reset
-│   └── main.tsx               # React root entry point
-├── package.json               # Dependencies and build scripts
-├── tsconfig.json              # TypeScript compilation configuration
-├── vercel.json                # Vercel deployment rewrite rules
-└── vite.config.ts             # Vite bundler configuration
+│   │   ├── answerChecker.ts        # Fuzzy matching, accent normalization, and aliases
+│   │   ├── gamePool.ts             # Deck randomization and repeat prevention
+│   │   ├── soundEngine.ts          # Procedural Web Audio synth engine
+│   │   └── storage.ts              # LocalStorage persistence for records
+│   ├── App.css                # Retro arcade CRT styling and animations
+│   ├── App.tsx                # Master state machine and screen navigation
+│   ├── index.css              # Typography and base reset
+│   └── main.tsx               # React application entry point
+├── package.json               # Scripts and dependencies
+├── tsconfig.json              # TypeScript compiler settings
+├── vercel.json                # Vercel SPA routing rewrites
+└── vite.config.ts             # Vite configuration
 ```
 
 ---
 
-## ☁️ Deployment
+## Deployment
 
-VexiQuest is continuously deployed on **Vercel**:
+VexiQuest is deployed on **Vercel** and accessible worldwide:
 
-- **Production URL:** [https://vexiquest.vercel.app](https://vexiquest.vercel.app)
-- **Deployment Strategy:** Automated continuous deployment connected to the `main` branch. Every pushed commit triggers an automated build verification and atomic production rollout.
+- **Live URL:** [https://vexiquest.vercel.app](https://vexiquest.vercel.app)
+- **Deployment Workflow:** Connected to the `main` branch of this repository. Pushes to `main` trigger automated builds and continuous atomic deployments.
 
 ---
 
-## 📜 Credits & Attributions
+## Credits & Attribution
 
 - **Flag Vector Graphics:** Distributed via [flag-icons](https://github.com/lipis/flag-icons) and [svg-country-flags](https://github.com/stefangabos/world_countries) under MIT / Public Domain licenses.
-- **Geographic Datasets:** Country boundaries and land TopoJSON via [world-atlas](https://github.com/topojson/world-atlas) (Natural Earth public domain data).
-- **Cartographic Projections:** Mathematics powered by [d3-geo](https://github.com/d3/d3-geo) (ISC License).
-- **Sound & Music:** Custom procedural audio engine written specifically for VexiQuest using the native Web Audio API (no copyrighted audio files).
-- **Icons & Visuals:** Custom-designed retro arcade SVG iconography.
+- **Geographical Topography:** Land and country TopoJSON data from [world-atlas](https://github.com/topojson/world-atlas) (Natural Earth public domain datasets).
+- **Map Projections:** Spherical mathematics powered by [d3-geo](https://github.com/d3/d3-geo) (ISC License).
+- **Audio:** Original procedural synthesizers written for VexiQuest using the native browser Web Audio API.
 
 ---
 
-## 🚦 Development Status
+## License & Usage
 
-**Actively Developing 🛠️**
-
-VexiQuest is an ongoing personal project. Planned additions include time-attack expedition modes, regional continental tournaments, daily challenges, and custom community flag packs.
+All rights reserved by the author. An open-source license has not yet been assigned to this repository. You may view and run the code for personal, non-commercial evaluation.
 
 ---
 
-<div align="center">
-  <sub>Crafted with passion for geography and retro gaming.</sub>
-</div>
+## Development Status
+
+**Actively Developing.**
+
+VexiQuest is under active development. Planned features include timed sprint modes, continental filters, daily challenges, and additional historical trivia.
