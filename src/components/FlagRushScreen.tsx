@@ -61,6 +61,15 @@ export const FlagRushScreen: React.FC<FlagRushScreenProps> = ({ onFinish, onExit
     deadlineRef.current = performance.now() + TOTAL_DURATION_MS;
     soundEngine.playTrack('flagrush');
 
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('testFeedback') === 'wrong') {
+        setFeedback('wrong');
+        setLastUserGuess('Atlantis');
+        return;
+      }
+    }
+
     return () => {
       if (feedbackTimeoutRef.current !== null) {
         clearTimeout(feedbackTimeoutRef.current);

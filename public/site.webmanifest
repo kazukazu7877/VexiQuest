@@ -1,6 +1,8 @@
 {
-  "name": "VexiQuest — Retro Arcade Flag Voyage",
+  "name": "VexiQuest — Guess the World",
   "short_name": "VexiQuest",
+  "description": "A retro arcade-inspired flag guessing game based on vexillology.",
+  "start_url": "/",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",

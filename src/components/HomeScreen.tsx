@@ -24,8 +24,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   personalBests,
   flagRushBest,
 }) => {
-  const [isClassicModalOpen, setIsClassicModalOpen] = useState(false);
-  const [isFlagRushModalOpen, setIsFlagRushModalOpen] = useState(false);
+  const [isClassicModalOpen, setIsClassicModalOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('preview') === 'classic-modal';
+    }
+    return false;
+  });
+  const [isFlagRushModalOpen, setIsFlagRushModalOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('preview') === 'flagrush-modal';
+    }
+    return false;
+  });
 
   // Dynamically responsive globe sizing for strict single-viewport fit
   const getResponsiveGlobeSize = () => {

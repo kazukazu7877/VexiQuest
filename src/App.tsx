@@ -97,7 +97,7 @@ export function App() {
       return;
     }
 
-    if (preview === 'flagrush') {
+    if (preview === 'flagrush' || preview === 'flagrush-feedback') {
       setScreen('flagrush-playing');
       return;
     }
