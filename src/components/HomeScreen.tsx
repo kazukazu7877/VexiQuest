@@ -1,43 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import type { Difficulty, PersonalBests } from '../types/game';
-import { DIFFICULTY_CONFIGS } from '../types/game';
+import type { Difficulty, PersonalBests, FlagRushPersonalBest } from '../types/game';
 import { InteractiveGlobe } from './InteractiveGlobe';
 import { AudioControls } from './AudioControls';
-import { Compass, Trophy, ArrowRight } from './Icons';
+import { Compass, Trophy, Zap, ArrowRight } from './Icons';
+import { ClassicInfoModal } from './ClassicInfoModal';
+import { FlagRushInfoModal } from './FlagRushInfoModal';
 import { soundEngine } from '../utils/soundEngine';
 
 interface HomeScreenProps {
   selectedDifficulty: Difficulty;
   onSelectDifficulty: (diff: Difficulty) => void;
-  onStartGame: () => void;
+  onStartClassic: () => void;
+  onStartFlagRushCountdown: () => void;
   personalBests: PersonalBests;
+  flagRushBest: FlagRushPersonalBest;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   selectedDifficulty,
   onSelectDifficulty,
-  onStartGame,
-  personalBests
+  onStartClassic,
+  onStartFlagRushCountdown,
+  personalBests,
+  flagRushBest,
 }) => {
-  const handleSelect = (diff: Difficulty) => {
-    soundEngine.playClick();
-    onSelectDifficulty(diff);
-  };
-
-  const handleStart = () => {
-    soundEngine.playClick();
-    onStartGame();
-  };
+  const [isClassicModalOpen, setIsClassicModalOpen] = useState(false);
+  const [isFlagRushModalOpen, setIsFlagRushModalOpen] = useState(false);
 
   // Dynamically responsive globe sizing for strict single-viewport fit
   const getResponsiveGlobeSize = () => {
-    if (typeof window === 'undefined') return 155;
+    if (typeof window === 'undefined') return 145;
     const vh = window.innerHeight;
     const vw = window.innerWidth;
-    if (vh < 600 || vw < 380) return 96;
-    if (vh < 700) return 118;
-    if (vh < 820) return 138;
-    return 162;
+    if (vh < 600 || vw < 380) return 90;
+    if (vh < 700) return 110;
+    if (vh < 820) return 130;
+    return 145;
   };
 
   const [globeSize, setGlobeSize] = useState(getResponsiveGlobeSize);
@@ -50,9 +48,26 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const handleOpenClassic = () => {
+    soundEngine.playClick();
+    setIsClassicModalOpen(true);
+  };
+
+  const handleOpenFlagRush = () => {
+    soundEngine.playClick();
+    setIsFlagRushModalOpen(true);
+  };
+
+  // Find overall highest score across classic difficulties
+  const classicHighScore = Math.max(
+    personalBests.easy?.highScore || 0,
+    personalBests.medium?.highScore || 0,
+    personalBests.hard?.highScore || 0
+  );
+
   return (
     <div className="home-screen-container">
-      {/* Top Header Bar */}
+      {/* 1. Top Arcade Control Bar */}
       <header className="home-header-nav">
         <div className="arcade-system-badge">
           <Compass size={14} className="badge-compass-icon" />
@@ -61,87 +76,115 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         <AudioControls />
       </header>
 
-      {/* Main Hero & Globe Section */}
+      {/* Main Hero & Mode Selection Layout */}
       <main className="home-hero-layout">
-        <div className="home-title-group">
-          <h1 className="home-title">VEXIQUEST</h1>
-          <p className="home-tagline">195 NATIONS. ONE CURIOUS MIND.</p>
+        {/* 2. Welcome to + Supplied Wordmark + Tagline + Vexillology Subtitle */}
+        <div className="home-brand-showcase">
+          <span className="home-welcome-lead">WELCOME TO</span>
+          <div className="home-wordmark-wrapper">
+            <img
+              src="/branding/vexiquest-wordmark.png"
+              alt="VEXIQUEST"
+              className="home-pixel-wordmark"
+              loading="eager"
+            />
+          </div>
+          <p className="home-tagline">GUESS THE WORLD, ONE FLAG AT A TIME.</p>
+          <p className="home-vexillology-subtitle">A GAME BASED ON VEXILLOLOGY</p>
         </div>
 
-        {/* Interactive 3D Canvas Globe with Arcade Bezel */}
+        {/* 3. Floating Rotating Pixel-Art Earth in Cosmos */}
         <div className="globe-interactive-showcase">
           <InteractiveGlobe size={globeSize} />
-          <div className="globe-caption-hint">
-            <span className="coord-text">LAT 48°51′N  •  LON 02°20′E</span>
-          </div>
         </div>
 
-        {/* Difficulty Selection Cartridges */}
-        <section className="difficulty-tier-selection" aria-label="Select Expedition Difficulty">
-          <div className="section-label-bar">
-            <span className="section-pixel-dot" />
-            <span className="section-label-text">SELECT EXPEDITION DIFFICULTY</span>
-            <span className="section-pixel-dot" />
+        {/* 4. Mode Selection Section Label (Amber Arcade Plaque) */}
+        <section className="mode-selection-section" aria-label="Select Game Mode">
+          <div className="mode-section-plaque">
+            <span className="plaque-dot" />
+            <h2 className="plaque-text">SELECT A MODE</h2>
+            <span className="plaque-dot" />
           </div>
 
-          <div className="difficulty-tiers-grid">
-            {(['easy', 'medium', 'hard'] as Difficulty[]).map((diff) => {
-              const config = DIFFICULTY_CONFIGS[diff];
-              const isSelected = selectedDifficulty === diff;
-              const pb = personalBests[diff];
-
-              return (
-                <div
-                  key={diff}
-                  className={`tier-card tier-${diff} ${isSelected ? 'tier-active' : ''}`}
-                  onClick={() => handleSelect(diff)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSelect(diff); }}
-                  aria-pressed={isSelected}
-                >
-                  <div className="tier-header-row">
-                    <span className="tier-name">{config.name.toUpperCase()}</span>
-                    <span className={`tier-led-dot ${isSelected ? 'led-active' : ''}`} />
-                  </div>
-
-                  <div className="tier-lives-row">
-                    <span className="tier-lives-label">
-                      {config.startingLives} {config.startingLives === 1 ? 'LIFE' : 'LIVES'}
-                    </span>
-                    <span className="tier-pts-badge">+{config.correctPoints} PTS</span>
-                  </div>
-
-                  <div className="tier-rule-tag">{config.hintPolicy}</div>
-                  <p className="tier-description">{config.description}</p>
-
-                  {/* Personal Best Record */}
-                  <div className="tier-record-footer">
-                    <Trophy size={11} className="record-trophy-icon" />
-                    <span className="record-label">BEST:</span>
-                    <span className="record-score">{pb ? pb.highScore : 0} PTS</span>
-                    {pb && pb.bestStreak > 0 && (
-                      <span className="record-streak">({pb.bestStreak} STREAK)</span>
-                    )}
-                  </div>
+          {/* 5. Two Mode Cards (Classic Left, Flag Rush Right) */}
+          <div className="modes-selection-grid">
+            {/* CLASSIC MODE CARD */}
+            <div
+              className="mode-card mode-card-classic"
+              onClick={handleOpenClassic}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') handleOpenClassic();
+              }}
+              aria-label="Classic Mode: Explore 195 flags with lives and hints across three difficulty levels"
+            >
+              <div className="mode-card-badge">THREE DIFFICULTY LEVELS</div>
+              <div className="mode-card-header">
+                <div className="mode-icon-box mode-icon-compass">
+                  <Compass size={22} />
                 </div>
-              );
-            })}
+                <div className="mode-title-wrap">
+                  <h3 className="mode-title">CLASSIC</h3>
+                  <span className="mode-tag">EXPEDITION</span>
+                </div>
+              </div>
+
+              <p className="mode-desc">
+                Take your time. Explore 195 flags, use hints and test your geographical knowledge.
+              </p>
+
+              <div className="mode-card-footer">
+                <div className="mode-best-stat">
+                  <Trophy size={12} />
+                  <span>BEST: {classicHighScore} PTS</span>
+                </div>
+                <span className="mode-action-link">
+                  <span>SELECT</span>
+                  <ArrowRight size={14} />
+                </span>
+              </div>
+            </div>
+
+            {/* FLAG RUSH MODE CARD */}
+            <div
+              className="mode-card mode-card-flagrush"
+              onClick={handleOpenFlagRush}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') handleOpenFlagRush();
+              }}
+              aria-label="Flag Rush: 60-second time attack frenzy"
+            >
+              <div className="mode-card-badge badge-rush">60-SECOND TIME ATTACK</div>
+              <div className="mode-card-header">
+                <div className="mode-icon-box mode-icon-rush">
+                  <Zap size={22} />
+                </div>
+                <div className="mode-title-wrap">
+                  <h3 className="mode-title">FLAG RUSH</h3>
+                  <span className="mode-tag tag-speed">SPEEDRUN</span>
+                </div>
+              </div>
+
+              <p className="mode-desc">
+                How many country flags can you identify in just 60 seconds?
+              </p>
+
+              <div className="mode-card-footer">
+                <div className="mode-best-stat">
+                  <Trophy size={12} />
+                  <span>BEST: {flagRushBest.highScore} FLAGS</span>
+                </div>
+                <span className="mode-action-link link-rush">
+                  <span>PLAY NOW</span>
+                  <ArrowRight size={14} />
+                </span>
+              </div>
+            </div>
           </div>
         </section>
-
-        {/* Main CTA: Start Expedition */}
-        <div className="home-action-wrap">
-          <button
-            type="button"
-            className="start-expedition-btn"
-            onClick={handleStart}
-            autoFocus
-          >
-            <span className="btn-label-text">START EXPEDITION</span>
-            <ArrowRight size={16} strokeWidth={2.5} />
-          </button>
-        </div>
       </main>
 
       {/* Retro Arcade Footer */}
@@ -154,6 +197,30 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <span>INSERT COIN / PRESS START</span>
         </div>
       </footer>
+
+      {/* Classic Info Modal */}
+      <ClassicInfoModal
+        isOpen={isClassicModalOpen}
+        onClose={() => setIsClassicModalOpen(false)}
+        selectedDifficulty={selectedDifficulty}
+        onSelectDifficulty={onSelectDifficulty}
+        onStartGame={() => {
+          setIsClassicModalOpen(false);
+          onStartClassic();
+        }}
+        personalBests={personalBests}
+      />
+
+      {/* Flag Rush Info Modal */}
+      <FlagRushInfoModal
+        isOpen={isFlagRushModalOpen}
+        onClose={() => setIsFlagRushModalOpen(false)}
+        onStartCountdown={() => {
+          setIsFlagRushModalOpen(false);
+          onStartFlagRushCountdown();
+        }}
+        personalBest={flagRushBest}
+      />
     </div>
   );
 };

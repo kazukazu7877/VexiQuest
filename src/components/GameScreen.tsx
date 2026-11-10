@@ -6,7 +6,7 @@ import { CompassLives } from './CompassLives';
 import { FlagCard } from './FlagCard';
 import { InfoCard } from './InfoCard';
 import { AudioControls } from './AudioControls';
-import { Lightbulb, Flame, ArrowRight, ArrowLeft } from './Icons';
+import { Lightbulb, Flame, ArrowRight, ArrowLeft, Compass, X } from './Icons';
 import { checkAnswer } from '../utils/answerChecker';
 import { soundEngine } from '../utils/soundEngine';
 
@@ -22,6 +22,7 @@ interface GameScreenProps {
   onRequestHint: () => void;
   onSubmitAnswer: (result: AnswerResult) => void;
   onNextFlag: () => void;
+  onChangeDifficulty: () => void;
   onExitGame: () => void;
 }
 
@@ -37,12 +38,14 @@ export const GameScreen: React.FC<GameScreenProps> = ({
   onRequestHint,
   onSubmitAnswer,
   onNextFlag,
+  onChangeDifficulty,
   onExitGame
 }) => {
   const [prevCode, setPrevCode] = useState(country.code);
   const [guess, setGuess] = useState('');
   const [revealing, setRevealing] = useState(false);
   const [currentResult, setCurrentResult] = useState<AnswerResult | null>(null);
+  const [isPauseMenuOpen, setIsPauseMenuOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const transitionTimerRef = useRef<number | null>(null);
 
@@ -197,8 +200,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             <button
               type="button"
               className="hud-menu-btn"
-              onClick={onExitGame}
-              title="Return to Menu"
+              onClick={() => {
+                soundEngine.playClick();
+                setIsPauseMenuOpen(true);
+              }}
+              title="Open Expedition Menu"
             >
               <ArrowLeft size={13} strokeWidth={2.4} />
               <span>MENU</span>
@@ -209,9 +215,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({
               <span className="badge-digit">#{questionNumber}</span>
             </div>
 
-            <div className={`hud-difficulty-tag diff-tag-${difficulty}`}>
+            <button
+              type="button"
+              className={`hud-difficulty-tag diff-tag-${difficulty}`}
+              onClick={() => {
+                soundEngine.playClick();
+                onChangeDifficulty();
+              }}
+              title="Click to Change Difficulty"
+            >
               {config.name.toUpperCase()}
-            </div>
+            </button>
           </div>
 
           <div className="hud-group-center game-hud-score-group">
@@ -328,6 +342,77 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           isGameOver={isGameOver}
           onAdvanceNow={handleAdvanceManually}
         />
+      )}
+
+      {/* In-Game Expedition Pause Menu */}
+      {isPauseMenuOpen && (
+        <div className="retro-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="pause-menu-title">
+          <div className="retro-modal-window pause-modal-window">
+            <div className="modal-header-bar">
+              <div className="modal-title-with-icon">
+                <Compass size={18} />
+                <h2 id="pause-menu-title" className="modal-title-text">EXPEDITION PAUSED</h2>
+              </div>
+              <button
+                type="button"
+                className="modal-close-btn"
+                onClick={() => {
+                  soundEngine.playClick();
+                  setIsPauseMenuOpen(false);
+                }}
+                aria-label="Resume Expedition"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="modal-body-content pause-menu-body">
+              <p className="modal-description-lead">
+                Current difficulty: <strong>{config.name.toUpperCase()}</strong> ({lives} {lives === 1 ? 'life' : 'lives'} remaining, {score} points).
+              </p>
+
+              <div className="pause-actions-list">
+                <button
+                  type="button"
+                  className="modal-primary-btn pause-resume-btn"
+                  onClick={() => {
+                    soundEngine.playClick();
+                    setIsPauseMenuOpen(false);
+                  }}
+                  autoFocus
+                >
+                  RESUME EXPEDITION
+                </button>
+
+                <button
+                  type="button"
+                  className="pause-secondary-btn pause-diff-btn"
+                  onClick={() => {
+                    soundEngine.playClick();
+                    setIsPauseMenuOpen(false);
+                    onChangeDifficulty();
+                  }}
+                >
+                  <Compass size={15} />
+                  <span>CHANGE DIFFICULTY</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="pause-secondary-btn pause-exit-btn"
+                  onClick={() => {
+                    soundEngine.playClick();
+                    setIsPauseMenuOpen(false);
+                    onExitGame();
+                  }}
+                >
+                  <ArrowLeft size={15} />
+                  <span>RETURN TO HOME SCREEN</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -1,6 +1,13 @@
 // VexiQuest Sound & Music Engine — Retro Arcade × Treasure Hunt Edition
 // Powered by procedural Web Audio synthesis for warm, nostalgic 16-bit chiptune melodies and crisp retro arcade SFX.
 
+interface PatternStep {
+  note: string | null;
+  bass: string | null;
+  perc: boolean;
+  accent?: boolean;
+}
+
 class SoundEngine {
   private ctx: AudioContext | null = null;
   private musicGain: GainNode | null = null;
@@ -8,7 +15,7 @@ class SoundEngine {
   private masterGain: GainNode | null = null;
 
   private isMusicPlaying: boolean = false;
-  private currentTrack: 'intro' | 'gameplay' | null = null;
+  private currentTrack: 'intro' | 'gameplay' | 'flagrush' | 'flagrush-intense' | null = null;
   private loopTimer: number | null = null;
   private nextNoteTime: number = 0;
   private currentStep: number = 0;
@@ -204,7 +211,7 @@ class SoundEngine {
   };
 
   // 32-step cyclical nostalgic melody pattern (D minor / G minor exploration)
-  private readonly MELODY_PATTERN: Array<{ note: string | null; bass: string | null; perc: boolean }> = [
+  private readonly MELODY_PATTERN: PatternStep[] = [
     // Measure 1: D minor
     { note: 'D4', bass: 'D2', perc: true },
     { note: 'F4', bass: null, perc: false },
@@ -246,16 +253,65 @@ class SoundEngine {
     { note: null, bass: null, perc: false },
   ];
 
-  public playTrack(track: 'intro' | 'gameplay'): void {
+  // 32-step high-energy Flag Rush speedrun pattern (A minor / F major / G major driving chiptune)
+  private readonly FLAGRUSH_PATTERN: PatternStep[] = [
+    // Phrase 1: A minor speed drive
+    { note: 'A4', bass: 'A2', perc: true, accent: true },
+    { note: 'C5', bass: null, perc: false },
+    { note: 'E5', bass: 'A2', perc: true },
+    { note: 'A5', bass: null, perc: false },
+    { note: 'G5', bass: 'A2', perc: true, accent: true },
+    { note: 'E5', bass: null, perc: false },
+    { note: 'C5', bass: 'A2', perc: true },
+    { note: 'E5', bass: null, perc: false },
+
+    // Phrase 2: F major power run
+    { note: 'F4', bass: 'F2', perc: true, accent: true },
+    { note: 'A4', bass: null, perc: false },
+    { note: 'C5', bass: 'F2', perc: true },
+    { note: 'F5', bass: null, perc: false },
+    { note: 'E5', bass: 'F2', perc: true, accent: true },
+    { note: 'C5', bass: null, perc: false },
+    { note: 'A4', bass: 'F2', perc: true },
+    { note: 'C5', bass: null, perc: false },
+
+    // Phrase 3: D minor / G major sprint
+    { note: 'D4', bass: 'D2', perc: true, accent: true },
+    { note: 'F4', bass: null, perc: false },
+    { note: 'A4', bass: 'D2', perc: true },
+    { note: 'D5', bass: null, perc: false },
+    { note: 'B4', bass: 'G2', perc: true, accent: true },
+    { note: 'G4', bass: null, perc: false },
+    { note: 'D5', bass: 'G2', perc: true },
+    { note: 'B4', bass: null, perc: false },
+
+    // Phrase 4: E minor climax turn
+    { note: 'E4', bass: 'E2', perc: true, accent: true },
+    { note: 'G4', bass: null, perc: false },
+    { note: 'B4', bass: 'E2', perc: true },
+    { note: 'E5', bass: null, perc: false },
+    { note: 'D5', bass: 'E2', perc: true, accent: true },
+    { note: 'B4', bass: null, perc: false },
+    { note: 'G4', bass: 'E2', perc: true },
+    { note: 'B4', bass: null, perc: false },
+  ];
+
+  public playTrack(track: 'intro' | 'gameplay' | 'flagrush' | 'flagrush-intense'): void {
+    const isTrackSwitch = this.currentTrack !== track;
     this.currentTrack = track;
     if (!this.musicEnabled) return;
 
     this.initCtx();
-    if (this.isMusicPlaying) return;
+    if (this.isMusicPlaying && !isTrackSwitch) return;
+
+    if (this.isMusicPlaying && isTrackSwitch) {
+      this.currentStep = 0;
+      return;
+    }
 
     this.isMusicPlaying = true;
     this.currentStep = 0;
-    this.nextNoteTime = (this.ctx?.currentTime || 0) + 0.15;
+    this.nextNoteTime = (this.ctx?.currentTime || 0) + 0.08;
     this.scheduleMusicLoop();
   }
 
@@ -276,39 +332,52 @@ class SoundEngine {
   private scheduleMusicLoop(): void {
     if (!this.isMusicPlaying || !this.ctx) return;
 
-    const stepDuration = 0.22; // ~136 BPM sixteenths
+    const isFlagRush = this.currentTrack === 'flagrush' || this.currentTrack === 'flagrush-intense';
+    const isIntense = this.currentTrack === 'flagrush-intense';
+
+    // Classic: ~136 BPM (0.22s) | Flag Rush: ~154 BPM (0.135s) | Intense: ~170 BPM (0.11s)
+    const stepDuration = isIntense ? 0.11 : isFlagRush ? 0.135 : 0.22;
     const scheduleWindow = 0.45;
+    const activePattern = isFlagRush ? this.FLAGRUSH_PATTERN : this.MELODY_PATTERN;
 
     while (this.nextNoteTime < this.ctx.currentTime + scheduleWindow) {
-      const stepData = this.MELODY_PATTERN[this.currentStep % this.MELODY_PATTERN.length];
+      const stepData = activePattern[this.currentStep % activePattern.length];
 
       // 1. Play melody note
       if (stepData.note && this.NOTE_FREQS[stepData.note]) {
+        const freq = this.NOTE_FREQS[stepData.note] * (isIntense && this.currentStep % 2 === 0 ? 1 : 1);
         this.playChiptuneTone(
-          this.NOTE_FREQS[stepData.note],
+          freq,
           this.nextNoteTime,
-          stepDuration * 0.92,
-          'triangle',
-          1350,
-          0.16
+          stepDuration * (isFlagRush ? 0.82 : 0.92),
+          isFlagRush ? 'square' : 'triangle',
+          isFlagRush ? 1800 : 1350,
+          isFlagRush ? 0.14 : 0.16
         );
       }
 
       // 2. Play bass note
       if (stepData.bass && this.NOTE_FREQS[stepData.bass]) {
-        this.playRetroBass(this.NOTE_FREQS[stepData.bass], this.nextNoteTime, stepDuration * 2.2);
+        this.playRetroBass(
+          this.NOTE_FREQS[stepData.bass],
+          this.nextNoteTime,
+          stepDuration * (isFlagRush ? 1.5 : 2.2)
+        );
       }
 
       // 3. Play light rhythm
       if (stepData.perc) {
-        this.playRetroPercussion(this.nextNoteTime, this.currentStep % 4 === 0);
+        this.playRetroPercussion(
+          this.nextNoteTime,
+          Boolean(stepData.accent || this.currentStep % 4 === 0)
+        );
       }
 
       this.currentStep++;
       this.nextNoteTime += stepDuration;
     }
 
-    this.loopTimer = window.setTimeout(() => this.scheduleMusicLoop(), 120);
+    this.loopTimer = window.setTimeout(() => this.scheduleMusicLoop(), 100);
   }
 
   // ===== RETRO ARCADE SOUND EFFECTS =====
@@ -488,6 +557,188 @@ class SoundEngine {
       osc.start(time);
       osc.stop(time + dur);
     });
+  }
+
+  // ===== FLAG RUSH SPECIFIC SFX =====
+
+  // 7. Countdown Beep (3, 2, 1) and Go!
+  public playCountdownBeep(isGo: boolean = false): void {
+    if (!this.sfxEnabled) return;
+    this.initCtx();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const t = this.ctx.currentTime;
+    if (!isGo) {
+      // 3, 2, 1: crisp retro metronome / arcade ready pulse (440Hz)
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(440, t);
+
+      gain.gain.setValueAtTime(0.22, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+
+      osc.start(t);
+      osc.stop(t + 0.13);
+    } else {
+      // GO!: triumphant rising high dual-tone (880Hz -> 1320Hz)
+      [880, 1320].forEach((freq, idx) => {
+        if (!this.ctx || !this.sfxGain) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const noteTime = t + idx * 0.04;
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(freq, noteTime);
+
+        gain.gain.setValueAtTime(0.24, noteTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.28);
+
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+
+        osc.start(noteTime);
+        osc.stop(noteTime + 0.3);
+      });
+    }
+  }
+
+  // 8. Flag Rush Fast Correct (snappy arcade ping)
+  public playRushCorrect(): void {
+    if (!this.sfxEnabled) return;
+    this.initCtx();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(659.25, t); // E5
+    osc.frequency.setValueAtTime(1046.50, t + 0.05); // C6
+
+    gain.gain.setValueAtTime(0.2, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+
+    osc.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start(t);
+    osc.stop(t + 0.15);
+  }
+
+  // 9. Flag Rush Wrong Answer (fast descending buzzer)
+  public playRushWrong(): void {
+    if (!this.sfxEnabled) return;
+    this.initCtx();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(160, t);
+    osc.frequency.linearRampToValueAtTime(100, t + 0.18);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(600, t);
+
+    gain.gain.setValueAtTime(0.25, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start(t);
+    osc.stop(t + 0.21);
+  }
+
+  // 10. Hint Penalty (-5 seconds penalty sound)
+  public playHintPenalty(): void {
+    if (!this.sfxEnabled) return;
+    this.initCtx();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(520, t);
+    osc.frequency.exponentialRampToValueAtTime(260, t + 0.18);
+
+    gain.gain.setValueAtTime(0.24, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+
+    osc.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start(t);
+    osc.stop(t + 0.23);
+  }
+
+  // 11. Time's Up Buzzer / Fanfare
+  public playTimesUp(): void {
+    if (!this.sfxEnabled) return;
+    this.initCtx();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const t = this.ctx.currentTime;
+    // Dramatic descending arcade sequence
+    const notes = [
+      { f: 587.33, d: 0.12, offset: 0 },
+      { f: 493.88, d: 0.14, offset: 0.12 },
+      { f: 440.00, d: 0.16, offset: 0.26 },
+      { f: 329.63, d: 0.45, offset: 0.42 }
+    ];
+
+    notes.forEach(({ f, d, offset }) => {
+      if (!this.ctx || !this.sfxGain) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const noteTime = t + offset;
+
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(f, noteTime);
+
+      gain.gain.setValueAtTime(0.24, noteTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, noteTime + d);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+
+      osc.start(noteTime);
+      osc.stop(noteTime + d);
+    });
+  }
+
+  // 12. Copy to Clipboard Success
+  public playCopySuccess(): void {
+    if (!this.sfxEnabled) return;
+    this.initCtx();
+    if (!this.ctx || !this.sfxGain) return;
+
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(783.99, t);
+    osc.frequency.setValueAtTime(1174.66, t + 0.06);
+
+    gain.gain.setValueAtTime(0.2, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+
+    osc.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start(t);
+    osc.stop(t + 0.2);
   }
 }
 

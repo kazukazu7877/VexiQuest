@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import type { Difficulty, PersonalBests } from '../types/game';
 import { DIFFICULTY_CONFIGS } from '../types/game';
 import { AudioControls } from './AudioControls';
-import { Trophy, RotateCcw, Compass, ArrowLeft } from './Icons';
+import { Trophy, RotateCcw, ArrowLeft, Compass } from './Icons';
 import { soundEngine } from '../utils/soundEngine';
 
 interface GameOverScreenProps {
@@ -114,8 +114,20 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
           </div>
         </div>
 
-        {/* Actions */}
+        {/* Actions: BUTTON 1: MAIN MENU, BUTTON 2: PLAY AGAIN */}
         <div className="game-over-action-row">
+          <button
+            type="button"
+            className="game-over-menu-btn"
+            onClick={() => {
+              soundEngine.playClick();
+              onReturnHome();
+            }}
+          >
+            <ArrowLeft size={15} />
+            <span>MAIN MENU</span>
+          </button>
+
           <button
             type="button"
             className="replay-primary-btn"
@@ -127,18 +139,6 @@ export const GameOverScreen: React.FC<GameOverScreenProps> = ({
           >
             <RotateCcw size={15} />
             <span>PLAY AGAIN</span>
-          </button>
-
-          <button
-            type="button"
-            className="change-difficulty-secondary-btn"
-            onClick={() => {
-              soundEngine.playClick();
-              onReturnHome();
-            }}
-          >
-            <Compass size={15} />
-            <span>CHANGE DIFFICULTY</span>
           </button>
         </div>
       </main>

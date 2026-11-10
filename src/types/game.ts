@@ -2,7 +2,13 @@ import type { Country } from '../data/countries';
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
-export type ScreenState = 'home' | 'playing' | 'gameover';
+export type ScreenState =
+  | 'home'
+  | 'playing'
+  | 'gameover'
+  | 'flagrush-countdown'
+  | 'flagrush-playing'
+  | 'flagrush-results';
 
 export interface DifficultyConfig {
   name: string;
@@ -60,4 +66,31 @@ export interface AnswerResult {
   pointsEarned: number;
   streakBonus: boolean;
   livesLost: number;
+}
+
+export interface FlagRushQuestionResult {
+  country: Country;
+  userAnswer: string;
+  isCorrect: boolean;
+  hintUsed: boolean;
+  timestamp: number;
+}
+
+export interface FlagRushResult {
+  score: number; // total correct
+  totalAttempted: number;
+  totalCorrect: number;
+  totalIncorrect: number;
+  accuracy: number; // percentage
+  longestStreak: number;
+  unansweredCountry?: Country | null;
+  history: FlagRushQuestionResult[];
+  isNewHighScore?: boolean;
+}
+
+export interface FlagRushPersonalBest {
+  highScore: number;
+  bestStreak: number;
+  gamesPlayed: number;
+  totalCorrect: number;
 }

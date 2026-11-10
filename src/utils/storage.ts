@@ -1,8 +1,16 @@
-import type { Difficulty, PersonalBests, PersonalBest } from '../types/game';
+import type { Difficulty, PersonalBests, PersonalBest, FlagRushPersonalBest } from '../types/game';
 
 const STORAGE_KEY = 'vexiquest_records_v1';
+const FLAGRUSH_STORAGE_KEY = 'vexiquest_flagrush_best_v1';
 
 const DEFAULT_PERSONAL_BEST: PersonalBest = {
+  highScore: 0,
+  bestStreak: 0,
+  gamesPlayed: 0,
+  totalCorrect: 0
+};
+
+export const DEFAULT_FLAGRUSH_BEST: FlagRushPersonalBest = {
   highScore: 0,
   bestStreak: 0,
   gamesPlayed: 0,
@@ -59,4 +67,45 @@ export function savePersonalBest(
   }
 
   return { bests: updated, isNewHighScore, isNewBestStreak };
+}
+
+export function loadFlagRushBest(): FlagRushPersonalBest {
+  try {
+    const raw = localStorage.getItem(FLAGRUSH_STORAGE_KEY);
+    if (!raw) return { ...DEFAULT_FLAGRUSH_BEST };
+    const parsed = JSON.parse(raw);
+    return {
+      highScore: Number(parsed.highScore) || 0,
+      bestStreak: Number(parsed.bestStreak) || 0,
+      gamesPlayed: Number(parsed.gamesPlayed) || 0,
+      totalCorrect: Number(parsed.totalCorrect) || 0
+    };
+  } catch {
+    return { ...DEFAULT_FLAGRUSH_BEST };
+  }
+}
+
+export function saveFlagRushBest(
+  score: number,
+  streak: number,
+  correctCount: number
+): { best: FlagRushPersonalBest; isNewHighScore: boolean; isNewBestStreak: boolean } {
+  const current = loadFlagRushBest();
+  const isNewHighScore = score > current.highScore;
+  const isNewBestStreak = streak > current.bestStreak;
+
+  const updated: FlagRushPersonalBest = {
+    highScore: Math.max(current.highScore, score),
+    bestStreak: Math.max(current.bestStreak, streak),
+    gamesPlayed: current.gamesPlayed + 1,
+    totalCorrect: current.totalCorrect + correctCount
+  };
+
+  try {
+    localStorage.setItem(FLAGRUSH_STORAGE_KEY, JSON.stringify(updated));
+  } catch (e) {
+    console.error('Failed to save Flag Rush record to localStorage:', e);
+  }
+
+  return { best: updated, isNewHighScore, isNewBestStreak };
 }

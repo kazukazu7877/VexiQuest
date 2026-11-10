@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { geoOrthographic, geoPath, geoGraticule } from 'd3-geo';
+import { geoOrthographic, geoPath, geoGraticule, geoInterpolate, geoDistance } from 'd3-geo';
 import { feature } from 'topojson-client';
 import worldData from 'world-atlas/land-110m.json';
 
@@ -8,11 +8,69 @@ interface InteractiveGlobeProps {
   className?: string;
 }
 
-// Extract land features once for performance
+// Extract land features once for optimal performance
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const landFeature = feature(worldData as any, (worldData as any).objects.land);
-const graticuleGenerator = geoGraticule().step([20, 20]);
+const graticuleGenerator = geoGraticule().step([30, 30]);
 const graticuleData = graticuleGenerator();
+
+// Subtle pixel stars in the cosmos surrounding Earth
+const STAR_OFFSETS: Array<{ x: number; y: number; s: number; color: string; alpha: number }> = [
+  { x: 0.08, y: 0.15, s: 2, color: '#93C5FD', alpha: 0.55 },
+  { x: 0.18, y: 0.08, s: 1.5, color: '#FCD34D', alpha: 0.45 },
+  { x: 0.88, y: 0.12, s: 2, color: '#BAE6FD', alpha: 0.65 },
+  { x: 0.94, y: 0.25, s: 1, color: '#FFFFFF', alpha: 0.4 },
+  { x: 0.06, y: 0.82, s: 1.5, color: '#6EE7B7', alpha: 0.45 },
+  { x: 0.14, y: 0.90, s: 2, color: '#93C5FD', alpha: 0.55 },
+  { x: 0.86, y: 0.80, s: 1.5, color: '#FCD34D', alpha: 0.45 },
+  { x: 0.92, y: 0.88, s: 2, color: '#FFFFFF', alpha: 0.55 },
+  { x: 0.50, y: 0.03, s: 1, color: '#E0F2FE', alpha: 0.45 },
+];
+
+// Great-circle exploration travel routes [start [lon, lat], end [lon, lat]]
+const EXPLORATION_ROUTES: Array<[[number, number], [number, number]]> = [
+  [[-9.1, 38.7], [-43.2, -22.9]], // Lisbon to Rio de Janeiro (Transatlantic Voyage)
+  [[31.2, 30.0], [72.8, 19.0]],   // Cairo to Mumbai (Silk / Spice Route)
+  [[-0.1, 51.5], [139.7, 35.7]],  // London to Tokyo (Trans-Eurasian Expedition)
+  [[151.2, -33.8], [-122.4, 37.8]] // Sydney to San Francisco (Pacific Crossing)
+];
+
+// Curated exploration hubs & geographical lights across continents [lon, lat]
+const GEOGRAPHIC_HUBS: [number, number][] = [
+  [-0.12, 51.5],   // London
+  [2.35, 48.85],   // Paris
+  [31.23, 30.04],  // Cairo
+  [36.82, -1.29],  // Nairobi
+  [18.42, -33.92], // Cape Town
+  [72.87, 19.07],  // Mumbai
+  [139.69, 35.68], // Tokyo
+  [103.82, 1.35],  // Singapore
+  [151.21, -33.87],// Sydney
+  [-43.17, -22.9], // Rio de Janeiro
+  [-58.38, -34.6], // Buenos Aires
+  [-74.0, 40.71],  // New York
+  [-122.42, 37.77],// San Francisco
+  [-21.94, 64.14], // Reykjavik
+  [-157.85, 21.3], // Honolulu
+];
+
+// Pre-compute interpolated route points for smooth curved rendering
+const ROUTE_LINESTRINGS = EXPLORATION_ROUTES.map(([start, end]) => {
+  const interpolator = geoInterpolate(start, end);
+  const steps = 24;
+  const coords: [number, number][] = [];
+  for (let i = 0; i <= steps; i++) {
+    coords.push(interpolator(i / steps));
+  }
+  return {
+    start,
+    end,
+    lineString: {
+      type: 'LineString' as const,
+      coordinates: coords
+    }
+  };
+});
 
 export const InteractiveGlobe: React.FC<InteractiveGlobeProps> = ({ size = 180, className = '' }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -27,15 +85,16 @@ export const InteractiveGlobe: React.FC<InteractiveGlobeProps> = ({ size = 180, 
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     let animId: number;
-    let isHovered = false;
-    let pointerX = 0;
-    let pointerY = 0;
+    let isDragging = false;
+    let prevMouseX = 0;
+    let prevMouseY = 0;
 
     // Spherical angles in degrees [longitude (lambda), latitude (phi), roll (gamma)]
-    let rotLambda = -20; // Start centered on Atlantic / Europe / Africa
-    let rotPhi = -15;    // Slight natural downward tilt showing northern hemisphere
-    let targetLambda = -20;
-    let targetPhi = -15;
+    let rotLambda = -25; // Centered on Atlantic / Europe / Africa initially
+    let rotPhi = -12;    // Natural 12° northern tilt
+    let targetLambda = -25;
+    let targetPhi = -12;
+    let orbitAngle = 0;  // Orbital survey satellite angle
 
     // Retina DPR scaling
     const dpr = window.devicePixelRatio || 1;
@@ -43,236 +102,345 @@ export const InteractiveGlobe: React.FC<InteractiveGlobeProps> = ({ size = 180, 
     canvas.height = size * dpr;
     ctx.scale(dpr, dpr);
 
-    // Geometrical proportions - centered in the arcade bezel dial
     const cx = size * 0.5;
     const cy = size * 0.5;
-    const globeRadius = size * 0.38;
-    const bezelRadius = size * 0.46;
+    // Earth sphere radius
+    const earthRadius = size * 0.38;
 
     // D3 Orthographic Projection
     const projection = geoOrthographic()
-      .scale(globeRadius)
+      .scale(earthRadius)
       .translate([cx, cy])
       .clipAngle(90)
-      .precision(0.3);
+      .precision(0.35);
 
     const path = geoPath(projection, ctx);
 
-    const handlePointerMove = (clientX: number, clientY: number) => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const normX = (clientX - rect.left) / rect.width - 0.5;
-      const normY = (clientY - rect.top) / rect.height - 0.5;
-      pointerX = normX;
-      pointerY = normY;
-      isHovered = true;
+    // Pointer event handlers for subtle rotation interaction
+    const onMouseDown = (e: MouseEvent) => {
+      isDragging = true;
+      prevMouseX = e.clientX;
+      prevMouseY = e.clientY;
     };
 
     const onMouseMove = (e: MouseEvent) => {
-      handlePointerMove(e.clientX, e.clientY);
+      if (!isDragging) return;
+      const dx = e.clientX - prevMouseX;
+      const dy = e.clientY - prevMouseY;
+      prevMouseX = e.clientX;
+      prevMouseY = e.clientY;
+
+      targetLambda += dx * 0.6;
+      targetPhi = Math.max(-60, Math.min(60, targetPhi - dy * 0.4));
     };
 
-    const onTouchMove = (e: TouchEvent) => {
+    const onMouseUp = () => {
+      isDragging = false;
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
       if (e.touches.length > 0) {
-        handlePointerMove(e.touches[0].clientX, e.touches[0].clientY);
+        isDragging = true;
+        prevMouseX = e.touches[0].clientX;
+        prevMouseY = e.touches[0].clientY;
       }
     };
 
-    const handlePointerLeave = () => {
-      isHovered = false;
+    const onTouchMove = (e: TouchEvent) => {
+      if (!isDragging || e.touches.length === 0) return;
+      const dx = e.touches[0].clientX - prevMouseX;
+      const dy = e.touches[0].clientY - prevMouseY;
+      prevMouseX = e.touches[0].clientX;
+      prevMouseY = e.touches[0].clientY;
+
+      targetLambda += dx * 0.6;
+      targetPhi = Math.max(-60, Math.min(60, targetPhi - dy * 0.4));
     };
 
     const container = containerRef.current;
     if (container) {
-      container.addEventListener('mousemove', onMouseMove);
-      container.addEventListener('mouseleave', handlePointerLeave);
-      container.addEventListener('touchmove', onTouchMove, { passive: true });
-      container.addEventListener('touchend', handlePointerLeave);
+      container.addEventListener('mousedown', onMouseDown);
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+      container.addEventListener('touchstart', onTouchStart, { passive: true });
+      window.addEventListener('touchmove', onTouchMove, { passive: true });
+      window.addEventListener('touchend', onMouseUp);
     }
 
     const render = () => {
       if (!prefersReducedMotion) {
-        if (isHovered) {
-          // Responsive fluid spin & tilt following cursor/finger
-          targetLambda += pointerX * 2.2;
-          targetPhi = -15 - pointerY * 35; // Constrain vertical tilt to realistic ±35°
-        } else {
+        if (!isDragging) {
           // Gentle idle rotation around polar axis
           targetLambda += 0.24;
-          targetPhi += (-15 - targetPhi) * 0.04;
+          targetPhi += (-12 - targetPhi) * 0.02;
         }
 
-        // Smooth inertia interpolation
-        rotLambda += (targetLambda - rotLambda) * 0.08;
-        rotPhi += (targetPhi - rotPhi) * 0.08;
+        rotLambda += (targetLambda - rotLambda) * 0.12;
+        rotPhi += (targetPhi - rotPhi) * 0.12;
+        orbitAngle += 0.012; // Slow orbit marker progression
       }
 
       ctx.clearRect(0, 0, size, size);
 
       // ==========================================
-      // 1. Arcade Radar Bezel / Explorer Compass Ring
+      // 1. Subtle Retro Pixel Stars in Space
+      // ==========================================
+      STAR_OFFSETS.forEach((st) => {
+        const sx = st.x * size;
+        const sy = st.y * size;
+        ctx.fillStyle = st.color;
+        ctx.globalAlpha = st.alpha;
+        ctx.fillRect(Math.floor(sx), Math.floor(sy), st.s, st.s);
+      });
+      ctx.globalAlpha = 1.0;
+
+      // ==========================================
+      // 2. Vintage Travel Cartographic Outer Crosshairs & Annotations
       // ==========================================
       ctx.save();
-      // Outer dark cabinet ring
-      ctx.beginPath();
-      ctx.arc(cx, cy, bezelRadius, 0, Math.PI * 2);
-      ctx.fillStyle = '#162829';
-      ctx.fill();
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = '#284B45';
-      ctx.stroke();
+      ctx.strokeStyle = 'rgba(82, 116, 106, 0.35)';
+      ctx.lineWidth = 1;
 
-      // Inset bezel channel
-      ctx.beginPath();
-      ctx.arc(cx, cy, bezelRadius - 3, 0, Math.PI * 2);
-      ctx.strokeStyle = '#0F1C1D';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Radar tick marks (every 30 degrees)
-      for (let angle = 0; angle < 360; angle += 30) {
-        const rad = (angle * Math.PI) / 180;
-        const isCardinal = angle % 90 === 0;
-        const outerR = bezelRadius - 5;
-        const innerR = isCardinal ? outerR - 6 : outerR - 3.5;
-        const x1 = cx + Math.cos(rad) * innerR;
-        const y1 = cy + Math.sin(rad) * innerR;
-        const x2 = cx + Math.cos(rad) * outerR;
-        const y2 = cy + Math.sin(rad) * outerR;
-
+      // Quadrant corner registration marks (+)
+      const tickDist = earthRadius * 1.25;
+      const tickLen = 4;
+      // Top, Bottom, Left, Right
+      [
+        [cx, cy - tickDist],
+        [cx, cy + tickDist],
+        [cx - tickDist, cy],
+        [cx + tickDist, cy]
+      ].forEach(([tx, ty]) => {
         ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.strokeStyle = isCardinal ? '#B9823E' : '#52746A';
-        ctx.lineWidth = isCardinal ? 1.5 : 1;
+        ctx.moveTo(tx - tickLen, ty);
+        ctx.lineTo(tx + tickLen, ty);
+        ctx.moveTo(tx, ty - tickLen);
+        ctx.lineTo(tx, ty + tickLen);
         ctx.stroke();
-      }
+      });
 
-      // Cardinal direction letters (N, S, E, W)
-      ctx.font = 'bold 9px "VT323", monospace';
-      ctx.fillStyle = '#DCA252';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('N', cx, cy - bezelRadius + 8);
-      ctx.fillText('S', cx, cy + bezelRadius - 8);
-      ctx.fillText('E', cx + bezelRadius - 8, cy);
-      ctx.fillText('W', cx - bezelRadius + 8, cy);
+      // Faint outer orbital expedition track ring
+      ctx.beginPath();
+      ctx.setLineDash([2, 6]);
+      ctx.arc(cx, cy, earthRadius * 1.22, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(82, 116, 106, 0.22)';
+      ctx.stroke();
+      ctx.setLineDash([]); // reset
+
+      // Tiny golden satellite / surveyor diamond along the orbit ring
+      const satX = cx + Math.cos(orbitAngle) * (earthRadius * 1.22);
+      const satY = cy + Math.sin(orbitAngle) * (earthRadius * 1.22);
+      ctx.fillStyle = '#FCD34D';
+      ctx.beginPath();
+      ctx.moveTo(satX, satY - 2.5);
+      ctx.lineTo(satX + 2.5, satY);
+      ctx.moveTo(satX, satY + 2.5);
+      ctx.lineTo(satX - 2.5, satY);
+      ctx.fill();
+
       ctx.restore();
 
       // ==========================================
-      // 2. Globe Sphere — Dark Arcade Ocean Gradient
+      // 3. Cyan-Blue Atmospheric Rim Glow (No stand, no pedestal)
+      // ==========================================
+      ctx.save();
+      const atmosphereGrad = ctx.createRadialGradient(
+        cx,
+        cy,
+        earthRadius * 0.94,
+        cx,
+        cy,
+        earthRadius * 1.15
+      );
+      atmosphereGrad.addColorStop(0, 'rgba(56, 189, 248, 0.42)'); // Bright soft cyan-blue rim
+      atmosphereGrad.addColorStop(0.35, 'rgba(14, 165, 233, 0.20)');
+      atmosphereGrad.addColorStop(0.75, 'rgba(3, 105, 161, 0.06)');
+      atmosphereGrad.addColorStop(1, 'rgba(2, 44, 34, 0)');
+
+      ctx.fillStyle = atmosphereGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, earthRadius * 1.16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // ==========================================
+      // 4. Earth Sphere — Rich Blue Ocean Gradient
       // ==========================================
       ctx.save();
       const oceanGrad = ctx.createRadialGradient(
-        cx - globeRadius * 0.3,
-        cy - globeRadius * 0.3,
-        globeRadius * 0.1,
+        cx - earthRadius * 0.32,
+        cy - earthRadius * 0.35,
+        earthRadius * 0.1,
         cx,
         cy,
-        globeRadius
+        earthRadius
       );
-      // Dark deep arcade teal to arcade black ocean
-      oceanGrad.addColorStop(0, '#244544');   // Illuminated deep arcade teal center
-      oceanGrad.addColorStop(0.55, '#1C3435'); // Deep arcade teal core
-      oceanGrad.addColorStop(0.85, '#152528'); // Deep tone
-      oceanGrad.addColorStop(1, '#0E1719');    // Arcade black rim
+      oceanGrad.addColorStop(0, '#2563EB');    // Sunlit bright ocean blue
+      oceanGrad.addColorStop(0.35, '#1D4ED8'); // Rich royal ocean blue
+      oceanGrad.addColorStop(0.70, '#1E3A8A'); // Deep navy blue
+      oceanGrad.addColorStop(0.92, '#0F172A'); // Edge limb depth
+      oceanGrad.addColorStop(1, '#070D18');    // Deep space horizon rim
 
       ctx.fillStyle = oceanGrad;
       ctx.beginPath();
-      ctx.arc(cx, cy, globeRadius, 0, Math.PI * 2);
+      ctx.arc(cx, cy, earthRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      // Dark bezel border
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = '#284B45';
+      // Delicate outer atmospheric line
+      ctx.strokeStyle = 'rgba(125, 211, 252, 0.55)';
+      ctx.lineWidth = 1.2;
       ctx.stroke();
 
-      // Clip strictly inside the sphere
+      // Clip inside the Earth sphere
       ctx.clip();
 
       // ==========================================
-      // 3. Update Projection Angles
+      // 5. Update Projection & Draw Graticule
       // ==========================================
       projection.rotate([rotLambda, rotPhi, 0]);
 
-      // ==========================================
-      // 4. Cartographic Graticule Grid
-      // ==========================================
+      // Subtle longitude & latitude lines
       ctx.beginPath();
       path(graticuleData);
-      ctx.strokeStyle = 'rgba(82, 116, 106, 0.45)'; // Muted sea green graticule
-      ctx.lineWidth = 0.75;
+      ctx.strokeStyle = 'rgba(147, 197, 253, 0.14)';
+      ctx.lineWidth = 0.6;
       ctx.stroke();
 
-      // Equator Line with Retro Amber Accent
+      // Equator Line (subtle cyan guide)
       ctx.beginPath();
       path({
         type: 'LineString',
         coordinates: Array.from({ length: 73 }, (_, i) => [i * 5 - 180, 0])
       });
-      ctx.strokeStyle = 'rgba(185, 130, 62, 0.65)'; // Retro amber equator
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
-
-      // Prime Meridian with subtle Amber Accent
-      ctx.beginPath();
-      path({
-        type: 'LineString',
-        coordinates: Array.from({ length: 37 }, (_, i) => [0, i * 5 - 90])
-      });
-      ctx.strokeStyle = 'rgba(185, 130, 62, 0.45)';
-      ctx.lineWidth = 1.0;
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.28)';
+      ctx.lineWidth = 0.8;
       ctx.stroke();
 
       // ==========================================
-      // 5. Accurate Natural Earth Landmasses (Weathered Parchment with Dark Ink)
+      // 6. Continents: Beautiful Green Landmasses (Forest & Leaf Green)
       // ==========================================
       ctx.beginPath();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       path(landFeature as any);
-      ctx.fillStyle = '#C5AE80'; // Weathered parchment landmasses
+      ctx.fillStyle = '#22C55E'; // Vibrant retro arcade continent green
       ctx.fill();
 
-      // Dark map ink coastline border
-      ctx.strokeStyle = '#443A2E';
-      ctx.lineWidth = 0.9;
+      // Continental coastline accent
+      ctx.strokeStyle = '#15803D';
+      ctx.lineWidth = 0.8;
       ctx.stroke();
 
+      // Second subtle land highlight layer for depth
+      ctx.save();
+      ctx.clip();
+      const landHighlightGrad = ctx.createLinearGradient(
+        cx - earthRadius,
+        cy - earthRadius,
+        cx + earthRadius,
+        cy + earthRadius
+      );
+      landHighlightGrad.addColorStop(0, 'rgba(134, 239, 172, 0.35)'); // Sunlight leaf green highlight
+      landHighlightGrad.addColorStop(0.5, 'rgba(34, 197, 94, 0.1)');
+      landHighlightGrad.addColorStop(1, 'rgba(20, 83, 45, 0.45)');   // Dark forest shadow
+      ctx.fillStyle = landHighlightGrad;
+      ctx.fillRect(cx - earthRadius, cy - earthRadius, earthRadius * 2, earthRadius * 2);
+      ctx.restore();
+
+      // View center on sphere facing camera [lon, lat]
+      const viewCenter: [number, number] = [-rotLambda, -rotPhi];
+      const maxVisibleAngle = Math.PI / 2 - 0.05; // 87.1°: strict occlusion threshold before limb horizon
+
       // ==========================================
-      // 6. Spherical 3D Lighting & Specular Arc
+      // 7. Subtle Geographical Travel Routes & Exploration Waypoints (Front-Hemisphere Only)
+      // ==========================================
+      ctx.save();
+      ctx.setLineDash([2, 3]);
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.42)'; // Warm golden exploration dashed lines
+      ctx.lineWidth = 1.1;
+
+      ROUTE_LINESTRINGS.forEach((route) => {
+        ctx.beginPath();
+        path(route.lineString);
+        ctx.stroke();
+
+        // Render visible waypoints (strictly front-facing only!)
+        [route.start, route.end].forEach((pt) => {
+          const angDist = geoDistance(pt, viewCenter);
+          if (angDist < maxVisibleAngle) {
+            const ptProjected = projection(pt);
+            if (ptProjected) {
+              const [px, py] = ptProjected;
+              const dist = Math.hypot(px - cx, py - cy);
+              if (dist < earthRadius * 0.96) {
+                // Smooth atmospheric edge attenuation near limb
+                const fade = Math.min(1, Math.max(0, (maxVisibleAngle - angDist) / 0.20));
+                ctx.fillStyle = `rgba(253, 230, 138, ${fade * 0.95})`;
+                ctx.fillRect(Math.floor(px) - 1, Math.floor(py) - 1, 2.5, 2.5);
+              }
+            }
+          }
+        });
+      });
+
+      // Render visible exploration hub city lights (strictly front-facing only!)
+      GEOGRAPHIC_HUBS.forEach((pt) => {
+        const angDist = geoDistance(pt, viewCenter);
+        if (angDist < maxVisibleAngle) {
+          const ptProjected = projection(pt);
+          if (ptProjected) {
+            const [px, py] = ptProjected;
+            const dist = Math.hypot(px - cx, py - cy);
+            if (dist < earthRadius * 0.96) {
+              const fade = Math.min(1, Math.max(0, (maxVisibleAngle - angDist) / 0.22));
+              ctx.fillStyle = `rgba(254, 243, 199, ${fade * 0.85})`;
+              ctx.fillRect(Math.floor(px) - 1, Math.floor(py) - 1, 2, 2);
+            }
+          }
+        }
+      });
+      ctx.restore();
+
+      // ==========================================
+      // 8. Spherical 3D Lighting & Specular Arc
       // ==========================================
       const sphereShading = ctx.createRadialGradient(
-        cx - globeRadius * 0.35,
-        cy - globeRadius * 0.35,
-        globeRadius * 0.3,
+        cx - earthRadius * 0.38,
+        cy - earthRadius * 0.38,
+        earthRadius * 0.2,
         cx,
         cy,
-        globeRadius
+        earthRadius
       );
-      sphereShading.addColorStop(0, 'rgba(232, 221, 189, 0.16)'); // Subtle warm specular
-      sphereShading.addColorStop(0.6, 'rgba(0, 0, 0, 0)');
-      sphereShading.addColorStop(1, 'rgba(10, 15, 18, 0.55)');   // Dark arcade limb darkening
+      sphereShading.addColorStop(0, 'rgba(255, 255, 255, 0.22)'); // Crisp sunlight specular reflection
+      sphereShading.addColorStop(0.5, 'rgba(255, 255, 255, 0.0)');
+      sphereShading.addColorStop(0.82, 'rgba(3, 7, 18, 0.25)');
+      sphereShading.addColorStop(1, 'rgba(3, 7, 18, 0.75)');     // Curved limb darkening in space
 
       ctx.fillStyle = sphereShading;
       ctx.beginPath();
-      ctx.arc(cx, cy, globeRadius, 0, Math.PI * 2);
+      ctx.arc(cx, cy, earthRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      // Subtle CRT scanline overlay across the globe
-      ctx.fillStyle = 'rgba(18, 25, 29, 0.12)';
-      for (let y = cy - globeRadius; y <= cy + globeRadius; y += 3) {
-        ctx.fillRect(cx - globeRadius, y, globeRadius * 2, 1);
+      // ==========================================
+      // 9. Ordered 2px Retro Scanline / Pixel Texture
+      // ==========================================
+      ctx.fillStyle = 'rgba(7, 13, 24, 0.10)';
+      for (let y = cy - earthRadius; y <= cy + earthRadius; y += 3) {
+        ctx.fillRect(cx - earthRadius, y, earthRadius * 2, 1);
       }
 
-      ctx.restore(); // remove globe clipping
+      ctx.restore(); // remove sphere clip
 
-      // Outer bezel highlight ring
+      // ==========================================
+      // 10. Subtle Retro Coordinates Annotation at Bottom
+      // ==========================================
       ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, cy, globeRadius + 1, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(185, 130, 62, 0.4)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
+      ctx.font = '8px "VT323", monospace';
+      ctx.fillStyle = 'rgba(206, 174, 128, 0.7)';
+      ctx.textAlign = 'center';
+      const normLambda = ((-rotLambda % 360) + 360) % 360;
+      const lonStr = `${Math.floor(normLambda).toString().padStart(3, '0')}°E`;
+      ctx.fillText(`EXPEDITION 195 • ${lonStr}`, cx, cy + earthRadius * 1.25);
       ctx.restore();
 
       animId = requestAnimationFrame(render);
@@ -283,11 +451,13 @@ export const InteractiveGlobe: React.FC<InteractiveGlobeProps> = ({ size = 180, 
     return () => {
       cancelAnimationFrame(animId);
       if (container) {
-        container.removeEventListener('mousemove', onMouseMove);
-        container.removeEventListener('mouseleave', handlePointerLeave);
-        container.removeEventListener('touchmove', onTouchMove);
-        container.removeEventListener('touchend', handlePointerLeave);
+        container.removeEventListener('mousedown', onMouseDown);
+        container.removeEventListener('touchstart', onTouchStart);
       }
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onMouseUp);
     };
   }, [size]);
 
@@ -295,9 +465,9 @@ export const InteractiveGlobe: React.FC<InteractiveGlobeProps> = ({ size = 180, 
     <div
       ref={containerRef}
       className={`interactive-globe-container ${className}`}
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, cursor: 'grab' }}
       role="img"
-      aria-label="Interactive retro arcade cartographic globe with accurate Natural Earth landmasses"
+      aria-label="Rotating pixel-art planet Earth with blue oceans, green continents, and subtle geographical travel routes"
     >
       <canvas ref={canvasRef} style={{ width: size, height: size }} />
     </div>

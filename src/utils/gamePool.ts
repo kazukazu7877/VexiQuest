@@ -1,4 +1,5 @@
 import type { Country } from '../data/countries';
+import { countries } from '../data/countries';
 import type { Difficulty } from '../types/game';
 import { getCountriesForDifficulty } from '../data/difficultyPools';
 
@@ -82,5 +83,49 @@ export class CountryPoolManager {
 
   public getRemainingInCycle(): number {
     return this.availableIndices.length;
+  }
+}
+
+export class FlagRushPoolManager {
+  private queue: Country[] = [];
+  private history: Country[] = [];
+
+  constructor() {
+    this.reset();
+  }
+
+  public reset(): void {
+    const list = [...countries];
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
+    this.queue = list;
+    this.history = [];
+  }
+
+  public getNextCountry(): Country | null {
+    if (this.queue.length === 0) return null;
+    const country = this.queue.shift()!;
+    this.history.push(country);
+    return country;
+  }
+
+  public getHint(country: Country): string {
+    if (country.capital) {
+      return `Capital: ${country.capital}`;
+    }
+    if (country.hints && country.hints.length > 0) {
+      return country.hints[0];
+    }
+    return `Continent: ${country.continent}`;
+  }
+
+  public getRemainingCount(): number {
+    return this.queue.length;
+  }
+
+  public getServedCount(): number {
+    return this.history.length;
   }
 }
