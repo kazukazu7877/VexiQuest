@@ -269,6 +269,7 @@
 }
 
 .interactive-globe-container {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -279,6 +280,34 @@
 
 .interactive-globe-container:active {
   cursor: grabbing;
+}
+
+.globe-expedition-badge {
+  position: absolute;
+  bottom: 0px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-arcade);
+  font-size: 7px;
+  line-height: 1;
+  letter-spacing: 2.2px;
+  color: var(--color-weathered-parchment);
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: rgba(14, 23, 25, 0.90);
+  border: 1px solid rgba(82, 116, 106, 0.50);
+  padding: 3.5px 9px;
+  border-radius: 2px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 0 6px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .globe-caption-hint {
@@ -3088,6 +3117,13 @@
     max-height: 200px;
   }
 
+  .globe-expedition-badge {
+    font-size: 6px;
+    letter-spacing: 1.5px;
+    padding: 2.5px 6px;
+    bottom: -1px;
+  }
+
   /* Mode Selection Cards */
   .mode-card {
     padding: 12px;
@@ -3312,6 +3348,13 @@
   .globe-interactive-showcase {
     max-width: 160px;
     max-height: 160px;
+  }
+
+  .globe-expedition-badge {
+    font-size: 5.5px;
+    letter-spacing: 1.2px;
+    padding: 2px 5px;
+    bottom: -2px;
   }
 
   .badge-digit {

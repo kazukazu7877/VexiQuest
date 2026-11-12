@@ -431,18 +431,6 @@ export const InteractiveGlobe: React.FC<InteractiveGlobeProps> = ({ size = 180, 
 
       ctx.restore(); // remove sphere clip
 
-      // ==========================================
-      // 10. Subtle Retro Coordinates Annotation at Bottom
-      // ==========================================
-      ctx.save();
-      ctx.font = '8px "VT323", monospace';
-      ctx.fillStyle = 'rgba(206, 174, 128, 0.7)';
-      ctx.textAlign = 'center';
-      const normLambda = ((-rotLambda % 360) + 360) % 360;
-      const lonStr = `${Math.floor(normLambda).toString().padStart(3, '0')}°E`;
-      ctx.fillText(`EXPEDITION 195 • ${lonStr}`, cx, cy + earthRadius * 1.25);
-      ctx.restore();
-
       animId = requestAnimationFrame(render);
     };
 
@@ -470,6 +458,7 @@ export const InteractiveGlobe: React.FC<InteractiveGlobeProps> = ({ size = 180, 
       aria-label="Rotating pixel-art planet Earth with blue oceans, green continents, and subtle geographical travel routes"
     >
       <canvas ref={canvasRef} style={{ width: size, height: size }} />
+      <span className="globe-expedition-badge">EXPEDITION 195</span>
     </div>
   );
 };
